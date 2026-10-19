@@ -1,8 +1,8 @@
 #Workflowの表示名
-name : GitHub Backup System
+name: GitHub Backup System
 
 #on 実行条件　GitHub画面から手動で実行できるようにする
-on : 
+on:
   workflow_dispatch:
 
 #処理のまとまり
