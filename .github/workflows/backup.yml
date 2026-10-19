@@ -1,0 +1,18 @@
+#Workflowの表示名
+name : GitHub Backup System
+
+#on 実行条件　GitHub画面から手動で実行できるようにする
+on : 
+  workflow_dispatch:
+
+#処理のまとまり
+jobs:
+  #jobの識別名
+  test:
+    #実行環境
+    runs-on: ubuntu-latest
+
+    #job内で順番に実行する処理
+    steps:
+      - name: Start Message
+        run: echo "Backup System Started"
