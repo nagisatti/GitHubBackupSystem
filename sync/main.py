@@ -25,6 +25,41 @@ def remove_readonly(func, path, exc):
 
 SCOPES = ["https://www.googleapis.com/auth/drive.file"]
 
+# 指定フォルダがない場合に作成する関数
+def get_or_create_folder(service, folder_name):
+    # 指定フォルダを検索
+    query = (
+        f"name = '{folder_name}' and "
+        "mimeType = 'application/vnd.google-apps.folder' and "
+        "'root' in parents and "
+        "trashed = false"
+    )
+
+    result = service.files().list(
+        q=query,
+        fields="files(id, name)"
+    ).execute()
+
+    folders = result.get("files", [])
+
+    # 既存フォルダを使用
+    if folders:
+        return folders[0]["id"]
+
+    # 存在しなければ作成
+    metadata = {
+        "name": folder_name,
+        "mimeType": "application/vnd.google-apps.folder",
+        "parents": ["root"]
+    }
+
+    folder = service.files().create(
+        body=metadata,
+        fields="id"
+    ).execute()
+
+    return folder["id"]
+
 def main(archive_path):
     creds = None
 
@@ -45,9 +80,19 @@ def main(archive_path):
             token.write(creds.to_json())
 
     try:
-        service = build("drive", "v3", credentials = creds)
+        service = build("drive", "v3", credentials=creds)
 
-        file_metadata = {"name": archive_path.name}
+        # 保存先フォルダを取得、存在しなければ作成
+        folder_id = get_or_create_folder(
+            service,
+            "GitHubBackupData"
+        )
+
+        # 保存先を指定
+        file_metadata = {
+            "name": archive_path.name,
+            "parents": [folder_id]
+        }
 
         media = MediaFileUpload(
             str(archive_path),
