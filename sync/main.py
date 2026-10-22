@@ -6,6 +6,8 @@ import tarfile
 import shutil
 import os
 import stat
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 #googleライブラリ
 from google.auth.transport.requests import Request
@@ -134,7 +136,9 @@ if repository["isBackup"]:
 
     # 保存名を日付でするために現在時刻を取得する
     # 同じ名前だと重複してエラーが起きてしまう可能性があるため
-    now = datetime.now()
+   # 日本時間を取得
+    now = datetime.now(ZoneInfo("Asia/Tokyo"))
+
     date = now.strftime("%Y年%m月%d日%H時%M分%S秒")
 
     # Dataフォルダ
