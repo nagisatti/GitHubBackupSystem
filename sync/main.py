@@ -2,12 +2,12 @@ import json
 from pathlib import Path
 import subprocess
 from datetime import datetime
-import tarfile
 import shutil
 import os
 import stat
 from datetime import datetime
 from zoneinfo import ZoneInfo
+import zipfile
 
 #googleライブラリ
 from google.auth.transport.requests import Request
@@ -167,26 +167,35 @@ if repository["isBackup"]:
     backup_success = False
 
     try:
-        with tarfile.open(archive_path, "w:gz") as tar:
-            tar.add(backup_path, arcname=backup_path.name)
+        # ZIPファイルを作成
+        archive_path = date_dir / f"{date}_{name}.git.zip"
 
-        with tarfile.open(archive_path, "r:gz") as tar:
-            members = tar.getmembers()
+        with zipfile.ZipFile(
+            archive_path,
+            "w",
+            compression=zipfile.ZIP_DEFLATED
+        ) as zipf:
 
-            # 全ファイルを読み込んで検証
-            for member in members:
-                if member.isfile():
-                    f = tar.extractfile(member)
-                    if f is None:
-                        raise tarfile.TarError("ファイルを読み込めません")
+            for file_path in backup_path.rglob("*"):
+                if file_path.is_file():
+                    zipf.write(
+                        file_path,
+                        arcname=file_path.relative_to(backup_path.parent)
+                    )
 
-                    while f.read(1024 * 1024):
-                        pass
+        print("ZIP圧縮完了")
 
-        print("圧縮・検証完了")
+        # ZIPファイルを再度開いて検証
+        with zipfile.ZipFile(archive_path, "r") as zipf:
+            bad_file = zipf.testzip()
+
+            if bad_file is not None:
+                raise ValueError(f"破損ファイル: {bad_file}")
+
+        print("ZIP検証完了")
         backup_success = True
 
-    except (OSError, EOFError, tarfile.TarError) as e:
+    except (OSError, EOFError, zipfile.BadZipFile, ValueError) as e:
         print("圧縮・検証失敗:", e)
 
     if backup_success:
