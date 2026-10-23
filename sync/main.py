@@ -294,12 +294,12 @@ try:
 except (OSError, EOFError, zipfile.BadZipFile, ValueError) as e:
     print("圧縮・検証失敗:", e)
 
-    # ========================================================
-    # バックアップ成功後の後処理
-    # ========================================================
-    if backup_success:
-        shutil.rmtree(backup_path, onexc=remove_readonly)
-        main(archive_path)
+# ========================================================
+# バックアップ成功後の後処理
+# ========================================================
+if backup_success:
+    shutil.rmtree(backup_path, onexc=remove_readonly)
+    main(archive_path)
 
 # バックアップ対象外の場合
 else:
